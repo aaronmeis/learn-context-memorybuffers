@@ -1,4 +1,12 @@
-"""Hybrid memory implementation."""
+"""
+Hybrid memory implementation.
+
+@help.category Memory Strategies
+@help.title Hybrid Memory Strategy
+@help.description Combines FIFO buffer with LLM-generated summaries. 
+Maintains recent messages verbatim, then summarizes older messages when token limit is reached.
+Balances detail preservation with token efficiency. Best for medium-length conversations.
+"""
 from typing import Optional
 import time
 
@@ -11,9 +19,20 @@ class HybridMemory(BaseMemory):
     """
     Hybrid memory combining FIFO buffer with LLM-generated summaries.
     
-    Maintains recent messages verbatim up to a token threshold,
-    then summarizes older messages to preserve context while
-    managing token consumption.
+    @help.title Hybrid Memory Class
+    @help.description Maintains recent messages verbatim up to a token threshold,
+    then summarizes older messages to preserve context while managing token consumption.
+    Uses LLM to generate and merge summaries automatically.
+    @help.example
+        memory = HybridMemory(
+            max_token_limit=500,
+            token_budget=4000
+        )
+        # When buffer exceeds limit, older messages are summarized
+        memory.add_message(Message(role="user", content="New message"))
+    @help.performance O(1) for recent messages, plus summarization overhead when triggered.
+    @help.use_case Best for medium-length conversations needing both detail and efficiency.
+    @help.requirements LLM access for summarization (Ollama).
     """
     
     def __init__(

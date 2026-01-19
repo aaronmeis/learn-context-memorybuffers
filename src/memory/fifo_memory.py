@@ -1,4 +1,12 @@
-"""FIFO memory implementation."""
+"""
+FIFO memory implementation.
+
+@help.category Memory Strategies
+@help.title FIFO Memory Strategy
+@help.description First-In-First-Out sliding window memory buffer. 
+Maintains only the most recent N message pairs, automatically evicting oldest messages.
+Simple, fast, and predictable memory usage. Best for short conversations.
+"""
 from collections import deque
 from typing import Optional
 import time
@@ -11,8 +19,15 @@ class FIFOMemory(BaseMemory):
     """
     First-In-First-Out memory buffer with sliding window.
     
-    Maintains only the k most recent message pairs, evicting
-    oldest messages when the window is exceeded.
+    @help.title FIFO Memory Class
+    @help.description Maintains only the k most recent message pairs, evicting
+    oldest messages when the window is exceeded. Uses Python deque for O(1) operations.
+    @help.example
+        memory = FIFOMemory(window_size=5, token_budget=4000)
+        memory.add_message(Message(role="user", content="Hello"))
+        context = memory.get_context()  # Returns recent messages
+    @help.performance O(1) add and retrieve operations. Very fast and memory-efficient.
+    @help.use_case Best for short conversations where recent context is most important.
     """
     
     def __init__(

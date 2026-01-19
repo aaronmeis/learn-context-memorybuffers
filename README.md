@@ -33,9 +33,10 @@ A Streamlit application that demonstrates and compares three memory buffering st
 
 The Docker setup will automatically:
 - Pull and start Ollama with the `tinyllama` model (smallest model)
+- Start ChromaDB server in a container for vector storage
 - Start the Streamlit application
 - Set up all required dependencies
-- Wait for Ollama to be ready before starting the app
+- Wait for Ollama and ChromaDB to be ready before starting the app
 
 ### Local Development
 
@@ -84,7 +85,9 @@ The Docker setup will automatically:
 
 5. **Open your browser** to `http://localhost:8501`
 
-**Important**: Make sure Ollama is running (`ollama serve`) before starting the Streamlit app, otherwise you'll get connection errors.
+**Important**: 
+- Make sure Ollama is running (`ollama serve`) before starting the Streamlit app, otherwise you'll get connection errors.
+- For local development, ChromaDB will use local file storage. To use a ChromaDB server, set `CHROMA_SERVER_URL=http://localhost:8000` in your `.env` file and run ChromaDB separately (or use Docker Compose).
 
 ## Features
 
@@ -92,6 +95,7 @@ The Docker setup will automatically:
 - **Real-time Metrics**: View token usage, message counts, and performance metrics
 - **Strategy Comparison**: Compare how different strategies handle context
 - **Visual Memory State**: See what messages are retained in each strategy
+- **Comprehensive Help System**: Modern, indexed HTML help documentation generated from source code
 
 ## Memory Strategies
 
@@ -117,7 +121,7 @@ Edit `.env` to customize:
 - **Streamlit**: Web UI framework
 - **Ollama**: Local LLM inference (using tinyllama)
 - **LangChain**: Memory management abstractions
-- **ChromaDB**: Vector store for semantic retrieval (optional, falls back to in-memory if unavailable)
+- **ChromaDB**: Vector store for semantic retrieval (runs in Docker container, falls back to in-memory if unavailable)
 - **Sentence Transformers**: Local embeddings (optional, ChromaDB can use default embeddings)
 
 ## Troubleshooting
@@ -129,15 +133,60 @@ Edit `.env` to customize:
 
 ### Docker Issues
 - Ensure Docker Desktop is running
-- Check Docker logs: `docker-compose logs ollama`
+- Check Docker logs: `docker-compose logs ollama` or `docker-compose logs chromadb`
 - Try rebuilding: `docker-compose up --build`
+- ChromaDB runs on port 8000 - ensure it's not in use
 
 ### Port Conflicts
 - If port 8501 is in use, change it in `docker-compose.yml` or use: `streamlit run web/app.py --server.port 8502`
 - If port 11434 is in use, Ollama is already running locally
+- If port 8000 is in use, ChromaDB is already running locally (change in docker-compose.yml)
 
 ### Memory/Import Errors
 - On Windows ARM64, some dependencies (like sentence-transformers) may not install. The app will fall back to ChromaDB's default embeddings.
 - If ChromaDB fails, Priority memory will use a simplified in-memory approach.
 
 For more detailed troubleshooting, see [QUICKSTART.md](QUICKSTART.md).
+
+## Documentation
+
+### Help System
+
+The project includes a comprehensive help documentation system that extracts documentation from `@help` tags embedded in the source code.
+
+**View Help Documentation:**
+- Run `open_help.bat` (Windows) or `open_help.sh` (Linux/Mac) to open in your browser
+- Or manually open `docs/help/index.html` in your browser
+
+**Generate Help Documentation:**
+```bash
+# Windows
+build_help.bat
+
+# Linux/Mac
+chmod +x build_help.sh
+./build_help.sh
+
+# Or directly with Python
+python scripts/build_help.py
+```
+
+**Help Tag Format:**
+```python
+"""
+@help.category Memory Strategies
+@help.title FIFO Memory Strategy
+@help.description Description of the feature
+@help.example
+    code example here
+"""
+```
+
+For complete documentation on the help system, see [HELP_SYSTEM.md](HELP_SYSTEM.md).
+
+### Additional Documentation
+
+- [QUICKSTART.md](QUICKSTART.md) - Quick start guide
+- [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) - Project overview
+- [HELP_SYSTEM.md](HELP_SYSTEM.md) - Help system documentation
+- [docs/HELP_README.md](docs/HELP_README.md) - Help system quick reference

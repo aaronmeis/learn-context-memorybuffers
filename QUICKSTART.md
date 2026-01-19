@@ -87,3 +87,45 @@ Try this to see the differences:
 6. "What was the budget we discussed?" ← This tests memory!
 
 The Priority and Hybrid strategies should remember the budget, while FIFO might have evicted it.
+
+## Documentation & Help
+
+### View Help Documentation
+
+The project includes comprehensive HTML help documentation:
+
+**Quick Access:**
+```bash
+# Windows
+open_help.bat
+
+# Linux/Mac
+chmod +x open_help.sh
+./open_help.sh
+```
+
+Or manually open `docs/help/index.html` in your browser.
+
+**Features:**
+- Full-text search across all topics
+- Category-based navigation
+- Code examples and usage guides
+- Performance notes and best practices
+
+### Generate Help Documentation
+
+To rebuild the help documentation from source code:
+
+```bash
+# Windows
+build_help.bat
+
+# Linux/Mac
+chmod +x build_help.sh
+./build_help.sh
+
+# Or directly
+python scripts/build_help.py
+```
+
+For complete documentation on the help system, see [HELP_SYSTEM.md](HELP_SYSTEM.md).

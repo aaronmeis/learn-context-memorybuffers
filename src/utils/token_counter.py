@@ -1,4 +1,11 @@
-"""Token counting utilities."""
+"""
+Token counting utilities.
+
+@help.category Utilities
+@help.title Token Counter
+@help.description Utility for counting tokens in text. Uses tiktoken for accurate counting,
+falls back to character-based approximation if tiktoken is unavailable.
+"""
 try:
     import tiktoken
     TIKTOKEN_AVAILABLE = True
@@ -9,6 +16,14 @@ except ImportError:
 def count_tokens(text: str, model: str = "gpt-3.5-turbo") -> int:
     """
     Count tokens in text using tiktoken or fallback approximation.
+    
+    @help.title Count Tokens Function
+    @help.description Counts tokens in text using tiktoken library for accuracy.
+    Falls back to 4-characters-per-token approximation if tiktoken unavailable.
+    @help.example
+        count = count_tokens("Hello, world!")
+        print(count)  # Output: ~3 tokens
+    @help.performance Fast with tiktoken, very fast with approximation fallback.
     
     Args:
         text: Text to count tokens for

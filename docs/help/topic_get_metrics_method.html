@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Metrics Method - Help</title>
+    <style>
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f7fa;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .hero {
+            text-align: center;
+            padding: 3rem 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            margin-bottom: 3rem;
+        }
+        
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .search-box {
+            margin-top: 2rem;
+            position: relative;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        #searchInput {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1rem;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-top: 0.5rem;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        .search-results.active {
+            display: block;
+        }
+        
+        .search-result-item {
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .search-result-item:hover {
+            background: #f5f7fa;
+        }
+        
+        .search-result-item h4 {
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+        
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        .category-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .category-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .category-card h2 {
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+        
+        .category-card h2 a {
+            text-decoration: none;
+            color: inherit;
+        }
+        
+        .topic-list {
+            list-style: none;
+        }
+        
+        .topic-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .topic-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .topic-list a {
+            color: #333;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .topic-list a:hover {
+            color: #667eea;
+        }
+        
+        .quick-links {
+            margin-top: 3rem;
+        }
+        
+        .links-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .quick-link {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        
+        .quick-link:hover {
+            transform: translateY(-2px);
+        }
+        
+        .quick-link .icon {
+            font-size: 2rem;
+        }
+        
+        .breadcrumb {
+            margin-bottom: 2rem;
+            color: #666;
+        }
+        
+        .breadcrumb a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .topics-grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+        
+        .topic-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .topic-card h3 {
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+        
+        .topic-card h3 a {
+            text-decoration: none;
+            color: inherit;
+        }
+        
+        .topic-card .meta {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .topic-card .meta span {
+            margin-right: 1rem;
+        }
+        
+        .topic-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .topic-content header {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #eee;
+        }
+        
+        .topic-content h1 {
+            color: #333;
+            margin-bottom: 1rem;
+        }
+        
+        .topic-meta {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+        
+        .category-badge {
+            background: #667eea;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .file-path {
+            color: #666;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        
+        .description {
+            margin: 2rem 0;
+            font-size: 1.1rem;
+            line-height: 1.8;
+        }
+        
+        .examples {
+            margin: 2rem 0;
+        }
+        
+        .examples h3 {
+            margin-bottom: 1rem;
+            color: #333;
+        }
+        
+        .example {
+            margin-bottom: 1.5rem;
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .example h4 {
+            margin-bottom: 0.5rem;
+            color: #667eea;
+        }
+        
+        .example pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        
+        .example code {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+        
+        .info-box {
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+        
+        .info-box.performance {
+            background: #e8f5e9;
+            border-color: #4caf50;
+        }
+        
+        .info-box.use-case {
+            background: #e3f2fd;
+            border-color: #2196f3;
+        }
+        
+        .info-box.requirements {
+            background: #fff3e0;
+            border-color: #ff9800;
+        }
+        
+        .info-box h3 {
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .categories-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+            <nav class="breadcrumb">
+                <a href="index.html">Home</a> / 
+                <a href="category_memory_system.html">Memory System</a> / 
+                <span>Get Metrics Method</span>
+            </nav>
+            
+            <article class="topic-content">
+                <header>
+                    <h1>Get Metrics Method</h1>
+                    <div class="topic-meta">
+                        <span class="category-badge">Memory System</span>
+                        <span class="file-path">src\memory\base.py</span>
+                        
+                    </div>
+                </header>
+                
+                <div class="description">
+                    <p>Abstract base class and data models for memory buffer implementations. Data model for individual conversation messages with metadata. Message role: either "user" for human input or "assistant" for LLM responses The actual text content of the message Timestamp when message was created. Used for recency calculations. Number of tokens in the message. Calculated using token counter utility. Relevance score (0.0-1.0) used by Priority strategy for ranking messages. Optional metadata dictionary for storing additional message information. Comprehensive metrics tracking for memory buffer performance. Total number of messages added to memory since initialization Current number of messages in active context window Total messages removed from memory (FIFO eviction or summarization) Sum of tokens from all messages currently in context Maximum token budget allocated for context window Percentage of token budget currently used (0-100) Time in milliseconds to retrieve context (for performance monitoring) Number of summarization operations performed (Hybrid strategy only) Abstract interface defining the contract for all memory strategies. Initialize memory with token budget. Used for metrics tracking. Adds a message to the memory buffer. Implementation varies by strategy: Returns list of messages to include in LLM context. Returns formatted string ready for LLM prompt construction. Resets memory buffer and metrics to initial state. Returns current performance metrics for monitoring and comparison.</p>
+                </div>
+                
+                <h3>Examples</h3><div class="examples">
+                <div class="example">
+                    <h4>Example 1</h4>
+                    <pre><code>msg = Message(</code></pre>
+                </div>
+                
+                <div class="example">
+                    <h4>Example 2</h4>
+                    <pre><code>class CustomMemory(BaseMemory):</code></pre>
+                </div>
+                </div>
+                
+                
+            </article>
+        
+    </div>
+    <script>
+        
+        // Load search index
+        let searchIndex = null;
+        
+        fetch('search_index.json')
+            .then(response => response.json())
+            .then(data => {
+                searchIndex = data;
+            })
+            .catch(err => console.error('Failed to load search index:', err));
+        
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+        
+        if (searchInput && searchResults) {
+            searchInput.addEventListener('input', function(e) {
+                const query = e.target.value.toLowerCase().trim();
+                
+                if (!query || !searchIndex) {
+                    searchResults.classList.remove('active');
+                    return;
+                }
+                
+                const results = searchIndex.topics.filter(topic => {
+                    return topic.title.toLowerCase().includes(query) ||
+                           topic.description.toLowerCase().includes(query) ||
+                           topic.category.toLowerCase().includes(query);
+                }).slice(0, 10);
+                
+                if (results.length === 0) {
+                    searchResults.innerHTML = '<div class="search-result-item"><p>No results found</p></div>';
+                    searchResults.classList.add('active');
+                    return;
+                }
+                
+                searchResults.innerHTML = results.map(topic => `
+                    <div class="search-result-item" onclick="window.location.href='topic_${topic.slug}.html'">
+                        <h4>${topic.title}</h4>
+                        <p>${topic.category} - ${topic.description.substring(0, 100)}...</p>
+                    </div>
+                `).join('');
+                
+                searchResults.classList.add('active');
+            });
+            
+            // Close search results when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                    searchResults.classList.remove('active');
+                }
+            });
+        }
+        
+    </script>
+</body>
+</html>

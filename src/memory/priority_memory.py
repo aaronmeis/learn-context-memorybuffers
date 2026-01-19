@@ -1,4 +1,12 @@
-"""Priority-based memory implementation."""
+"""
+Priority-based memory implementation.
+
+@help.category Memory Strategies
+@help.title Priority Memory Strategy
+@help.description Semantic relevance-based memory buffer using vector similarity search.
+Retrieves most relevant messages based on query similarity, combining semantic and recency scores.
+Best for long conversations where important context may be older.
+"""
 from typing import Optional
 import time
 
@@ -20,13 +28,33 @@ try:
 except ImportError:
     CHROMADB_AVAILABLE = False
 
+# Try to import ChromaDB client for server connection
+try:
+    import chromadb
+    CHROMADB_CLIENT_AVAILABLE = True
+except ImportError:
+    CHROMADB_CLIENT_AVAILABLE = False
+
 
 class PriorityMemory(BaseMemory):
     """
     Priority-based memory buffer with semantic retrieval.
     
-    Assigns relevance scores to messages and selectively retains
-    high-priority content. Uses vector similarity for retrieval.
+    @help.title Priority Memory Class
+    @help.description Assigns relevance scores to messages and selectively retains
+    high-priority content. Uses vector similarity for retrieval via ChromaDB or in-memory embeddings.
+    @help.example
+        memory = PriorityMemory(
+            top_k=5,
+            token_budget=4000,
+            persist_directory="./chroma_data"
+        )
+        memory.add_message(Message(role="user", content="Budget is $50k"))
+        # Later, query retrieves relevant messages
+        context = memory.get_context(query="What was the budget?")
+    @help.performance O(k) retrieval from vector store. Slower than FIFO but more intelligent.
+    @help.use_case Best for long conversations where important information may be older.
+    @help.requirements ChromaDB (optional, falls back to in-memory) and sentence-transformers.
     """
     
     def __init__(
@@ -35,7 +63,8 @@ class PriorityMemory(BaseMemory):
         token_budget: int = 4000,
         recency_weight: float = 0.3,
         semantic_weight: float = 0.7,
-        persist_directory: str = "./chroma_data"
+        persist_directory: str = "./chroma_data",
+        chroma_server_url: Optional[str] = None
     ):
         super().__init__(token_budget)
         self.top_k = top_k
@@ -55,12 +84,36 @@ class PriorityMemory(BaseMemory):
         self.use_chromadb = CHROMADB_AVAILABLE
         if self.use_chromadb:
             try:
-                # ChromaDB can use its default embeddings if embedding_function is None
-                self.vector_store = Chroma(
-                    collection_name="conversation_memory",
-                    embedding_function=self.embeddings,
-                    persist_directory=persist_directory
-                )
+                # Connect to ChromaDB server if URL provided, otherwise use local persistence
+                if chroma_server_url:
+                    # Connect to ChromaDB server
+                    if CHROMADB_CLIENT_AVAILABLE:
+                        # Parse URL to extract host and port
+                        from urllib.parse import urlparse
+                        parsed = urlparse(chroma_server_url)
+                        host = parsed.hostname or "localhost"
+                        port = parsed.port or 8000
+                        
+                        chroma_client = chromadb.HttpClient(host=host, port=port)
+                        self.vector_store = Chroma(
+                            collection_name="conversation_memory",
+                            embedding_function=self.embeddings,
+                            client=chroma_client
+                        )
+                    else:
+                        # Fallback: try using chroma_server_url parameter directly
+                        self.vector_store = Chroma(
+                            collection_name="conversation_memory",
+                            embedding_function=self.embeddings,
+                            chroma_server_url=chroma_server_url
+                        )
+                else:
+                    # Local ChromaDB with persistence
+                    self.vector_store = Chroma(
+                        collection_name="conversation_memory",
+                        embedding_function=self.embeddings,
+                        persist_directory=persist_directory
+                    )
             except Exception as e:
                 # Fallback to in-memory if ChromaDB fails
                 print(f"ChromaDB initialization failed: {e}, using in-memory fallback")
@@ -114,6 +167,10 @@ class PriorityMemory(BaseMemory):
         # Update metrics
         self.metrics.total_messages_processed += 1
         self.metrics.retrieval_latency_ms = (time.perf_counter() - start_time) * 1000
+        
+        # Update context metrics (for comparison tab)
+        # This ensures metrics are updated even when this strategy isn't active
+        self._update_metrics()
     
     def get_context(self, query: Optional[str] = None) -> list[Message]:
         """Retrieve most relevant messages based on semantic similarity."""
@@ -213,6 +270,24 @@ class PriorityMemory(BaseMemory):
             prefix = "Human" if msg.role == "user" else "Assistant"
             lines.append(f"{prefix}: {msg.content}")
         return "\n".join(lines)
+    
+    def _update_metrics(self) -> None:
+        """Update metrics based on current state."""
+        # Calculate what the context would be (recent messages if small, or top_k if larger)
+        if len(self.all_messages) <= self.top_k:
+            context_messages = self.all_messages
+        else:
+            # Use recent messages as a proxy (actual context depends on query)
+            context_messages = self.all_messages[-self.top_k:]
+        
+        self.metrics.messages_in_context = len(context_messages)
+        self.metrics.messages_evicted = max(0, len(self.all_messages) - len(context_messages))
+        self.metrics.total_tokens_used = sum(m.token_count for m in context_messages)
+        self.metrics.token_utilization_pct = (
+            self.metrics.total_tokens_used / self.token_budget * 100
+            if self.token_budget > 0
+            else 0.0
+        )
     
     def clear(self) -> None:
         """Clear all memory."""

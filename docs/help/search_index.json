@@ -1,0 +1,67 @@
+{
+  "topics": [
+    {
+      "title": "Get Settings Function",
+      "category": "Configuration",
+      "description": "Centralized configuration management using Pydantic Settings. Main configuration class that loads settings from environment variables Settings for Large Language Model provider and model selection Base URL for Ollama API endpoint. Default is localhost on standard port. Name of the Ollama model to use. tinyllama is the smallest, fastest model. LLM provider name. Currently only 'ollama' is supported. Settings for text embedding models used in semantic search Sentence Transformers model for generating embeddings. Settings for vector database used in Priority memory strategy Local directory path for ChromaDB persistence. Optional ChromaDB server URL for remote vector storage. Parameters controlling memory buffer behavior for each strategy Number of message pairs (user+assistant) to keep in FIFO buffer. Number of most relevant messages to retrieve in Priority strategy. Token threshold for Hybrid strategy. When recent messages exceed this, Total token budget for context window. Used for utilization calculations Logging level: DEBUG, INFO, WARNING, ERROR, CRITICAL Singleton function that returns the application settings instance. ",
+      "file": "src\\config\\settings.py",
+      "slug": "get_settings_function"
+    },
+    {
+      "title": "Get Embedding Model Function",
+      "category": "LLM Integration",
+      "description": "Wrapper for text embedding models used in semantic search. Returns singleton embedding model instance. Loads Sentence Transformers ",
+      "file": "src\\llm\\embeddings.py",
+      "slug": "get_embedding_model_function"
+    },
+    {
+      "title": "Get LLM Function",
+      "category": "LLM Integration",
+      "description": "Abstraction layer for Large Language Model providers. Factory function that returns configured LLM instance. ",
+      "file": "src\\llm\\provider.py",
+      "slug": "get_llm_function"
+    },
+    {
+      "title": "Get Metrics Method",
+      "category": "Memory System",
+      "description": "Abstract base class and data models for memory buffer implementations. Data model for individual conversation messages with metadata. Message role: either \"user\" for human input or \"assistant\" for LLM responses The actual text content of the message Timestamp when message was created. Used for recency calculations. Number of tokens in the message. Calculated using token counter utility. Relevance score (0.0-1.0) used by Priority strategy for ranking messages. Optional metadata dictionary for storing additional message information. Comprehensive metrics tracking for memory buffer performance. Total number of messages added to memory since initialization Current number of messages in active context window Total messages removed from memory (FIFO eviction or summarization) Sum of tokens from all messages currently in context Maximum token budget allocated for context window Percentage of token budget currently used (0-100) Time in milliseconds to retrieve context (for performance monitoring) Number of summarization operations performed (Hybrid strategy only) Abstract interface defining the contract for all memory strategies. Initialize memory with token budget. Used for metrics tracking. Adds a message to the memory buffer. Implementation varies by strategy: Returns list of messages to include in LLM context. Returns formatted string ready for LLM prompt construction. Resets memory buffer and metrics to initial state. Returns current performance metrics for monitoring and comparison. ",
+      "file": "src\\memory\\base.py",
+      "slug": "get_metrics_method"
+    },
+    {
+      "title": "FIFO Memory Class",
+      "category": "Memory Strategies",
+      "description": "First-In-First-Out sliding window memory buffer. Maintains only the k most recent message pairs, evicting ",
+      "file": "src\\memory\\fifo_memory.py",
+      "slug": "fifo_memory_class"
+    },
+    {
+      "title": "Hybrid Memory Class",
+      "category": "Memory Strategies",
+      "description": "Combines FIFO buffer with LLM-generated summaries. Maintains recent messages verbatim up to a token threshold, ",
+      "file": "src\\memory\\hybrid_memory.py",
+      "slug": "hybrid_memory_class"
+    },
+    {
+      "title": "Priority Memory Class",
+      "category": "Memory Strategies",
+      "description": "Semantic relevance-based memory buffer using vector similarity search. Assigns relevance scores to messages and selectively retains ",
+      "file": "src\\memory\\priority_memory.py",
+      "slug": "priority_memory_class"
+    },
+    {
+      "title": "Count Tokens Function",
+      "category": "Utilities",
+      "description": "Utility for counting tokens in text. Uses tiktoken for accurate counting, Counts tokens in text using tiktoken library for accuracy. ",
+      "file": "src\\utils\\token_counter.py",
+      "slug": "count_tokens_function"
+    },
+    {
+      "title": "Run Automated Tests Function",
+      "category": "Application",
+      "description": "Interactive Streamlit web application for comparing memory buffer strategies. Removes conversation history format artifacts from LLM responses. Processes a user message by adding it to all memory strategies, Executes predefined test sequences for each memory strategy ",
+      "file": "web\\app.py",
+      "slug": "run_automated_tests_function"
+    }
+  ]
+}
