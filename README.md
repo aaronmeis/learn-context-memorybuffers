@@ -1,5 +1,7 @@
 # Memory Buffer Comparison Application
 
+![LLM Memory Strategy - Memory Buffer](./memory.png) 
+
 > Compare FIFO, Priority, and Hybrid memory buffering strategies for LLM chatbots using Streamlit, Ollama, and local embeddings
 
 A Streamlit application that demonstrates and compares three memory buffering strategies for LLM-powered chatbots:
@@ -190,3 +192,4 @@ For complete documentation on the help system, see [HELP_SYSTEM.md](HELP_SYSTEM.
 - [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) - Project overview
 - [HELP_SYSTEM.md](HELP_SYSTEM.md) - Help system documentation
 - [docs/HELP_README.md](docs/HELP_README.md) - Help system quick reference
+
