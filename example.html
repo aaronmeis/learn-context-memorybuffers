@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Context Maturity Grid | Corrected 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --neon-blue: #00d4ff;
+            --ibm-blue: #0f62fe;
+            --ibm-teal: #005d5d;
+            --ibm-purple: #6929c4;
+            --ibm-orange: #8a3800;
+            --ibm-gray: #525252;
+        }
+
+        * { box-sizing: border-box; }
+        body { 
+            margin: 0; 
+            background: linear-gradient(135deg, #050505 0%, #0a0a1a 100%); 
+            font-family: 'IBM Plex Sans', sans-serif; 
+            color: #e0e0e0; 
+            display: flex; 
+            height: 100vh; 
+            overflow: hidden; 
+        }
+
+        /* --- Left Side: Grid --- */
+        .main-content { flex: 1; padding: 30px 40px; overflow-y: auto; }
+        header { margin-bottom: 25px; border-left: 4px solid var(--neon-blue); padding-left: 20px; }
+        h1 { font-size: 26px; font-weight: 300; margin: 0; letter-spacing: -1px; }
+        h1 b { font-weight: 600; color: var(--neon-blue); }
+        .sub-header { color: #888; font-size: 11px; text-transform: uppercase; margin-top: 5px; }
+
+        .grid-container { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+        .col-label { font-size: 9px; font-weight: 600; text-transform: uppercase; margin-bottom: 10px; text-align: center; }
+
+        .block {
+            height: 70px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between;
+            cursor: pointer; transition: all 0.2s ease; border: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+        }
+        .block:hover { transform: scale(1.03); z-index: 10; border-color: #fff; box-shadow: 0 0 20px rgba(0,212,255,0.3); }
+        .block.active { border: 2px solid #fff; opacity: 1 !important; box-shadow: 0 0 15px rgba(255,255,255,0.1); }
+        .block-id { font-size: 20px; font-weight: 600; }
+        .block-name { font-size: 9px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* --- Right Side: Inspector (Fixed Layout) --- */
+        .inspector {
+            width: 480px; background: rgba(0,0,0,0.8); backdrop-filter: blur(30px);
+            border-left: 1px solid #333; padding: 40px; display: flex; flex-direction: column; 
+            overflow-y: auto;
+        }
+        .inspector-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .tag { padding: 4px 10px; font-size: 10px; font-weight: 600; color: #fff; text-transform: uppercase; border-radius: 2px; }
+        .complexity-tag { font-size: 10px; font-weight: 600; color: #888; text-transform: uppercase; }
+        
+        h2 { font-size: 28px; margin: 0 0 5px 0; color: #fff; font-weight: 600; }
+        .area-subtitle { font-size: 14px; color: var(--neon-blue); font-weight: 400; margin-bottom: 25px; border-bottom: 1px solid #333; padding-bottom: 15px; }
+
+        .section { margin-bottom: 20px; }
+        .section-label { font-size: 10px; font-weight: 600; color: #8d8d8d; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px; }
+        .section-content { font-size: 13px; line-height: 1.6; color: #d1d1d1; margin: 0; }
+        
+        .impact-box { 
+            background: rgba(15,98,254,0.15); border-left: 4px solid var(--ibm-blue); 
+            padding: 15px; margin-bottom: 25px; 
+        }
+        .impact-box .section-content { font-weight: 600; color: #fff; font-size: 14px; }
+
+        .prompt-window {
+            background: #000; border: 1px solid #333; border-radius: 4px; padding: 15px;
+            font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #00ffc3;
+            line-height: 1.6; min-height: 160px; max-height: 200px; overflow-y: auto;
+            white-space: pre-wrap; margin-top: 10px;
+        }
+
+        .btn-group { margin-top: auto; padding-top: 20px; display: flex; flex-direction: column; gap: 12px; }
+        .primary-btn {
+            background: var(--ibm-blue); color: #fff; border: none; padding: 16px;
+            font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none;
+            display: flex; justify-content: space-between; align-items: center; transition: 0.2s;
+        }
+        .primary-btn:hover { background: #0353e9; transform: translateY(-2px); }
+        .secondary-btn { background: #222; color: #fff; border: 1px solid #444; padding: 10px; font-size: 11px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .secondary-btn:hover { background: #333; border-color: #666; }
+
+        .toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: var(--neon-blue); color: #000; padding: 12px 24px; border-radius: 4px;
+            font-weight: 600; display: none; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-content">
+    <header>
+        <h1>AI Context <b>Maturity Grid</b></h1>
+        <div class="sub-header">Impact (Highest &rarr; Foundations) | Complexity (Simple &rarr; Expert)</div>
+    </header>
+    <div class="grid-container" id="grid"></div>
+</div>
+
+<div class="inspector" id="inspector">
+    </div>
+
+<div id="toast" class="toast">PROMPT COPIED TO CLIPBOARD</div>
+
+<script>
+    const DATA = [
+        // PILLAR 1: STORAGE (Highest ROI) - Simple -> Expert
+        { id: 'Mb', name: 'Memory Buffers', cat: 'storage', complexity: 'Low', area: 'Multi-turn Management', 
+          desc: 'Maintaining buffers for multi-turn conversations, selectively including recent or relevant history to prevent bloat in ongoing interactions.',
+          help: 'The base layer for session management; prevents context overflow in basic chats by maintaining a rolling salient history.', 
+          topics: 'FIFO vs. priority buffering; session management; metrics for buffer efficiency.', 
+          prompt: 'In enterprise chatbot architecture with LLMs, Agents, MCPs, and RAG, analyze memory buffering for multi-turn dialogues, comparing FIFO and priority approaches, session management integration, multi-user handling, and efficiency metrics.',
+          link: 'https://www.google.com/search?q=LLM+Memory+Buffering+Strategies' },
+        { id: 'Sn', name: 'Structured Notes', cat: 'storage', complexity: 'Med', area: 'Agentic Memory', 
+          desc: 'Techniques where agents write and persist notes or summaries to external memory outside the context window for long-term retention and retrieval.',
+          help: 'Enables "infinite" agent memory by offloading facts to vector databases, preventing context rot in long-horizon tasks.', 
+          topics: 'Vector DB integration; scalability in multi-agent systems; privacy in persistent memory.', 
+          prompt: 'As an Enterprise AI architect building a RAG system with LLMs, Agents, and MCPs, provide a comprehensive guide on implementing structured note-taking for agentic memory in a chatbot, including how to integrate with vector databases, handle scalability for multi-agent setups, address privacy issues, and evaluate recall accuracy with benchmarks and examples.',
+          link: 'https://www.google.com/search?q=Agentic+Memory+Structured+Note-Taking' },
+        { id: 'Ca', name: 'Context Aware', cat: 'storage', complexity: 'High', area: 'Hybrid Systems', 
+          desc: 'Advanced systems that maintain continuity over time by dynamically storing and recalling information across sessions, blending short-term and long-term memory layers.',
+          help: 'Maintains continuity across sessions by blending working RAM with persistent DB storage for human-like recall.', 
+          topics: 'Hybrid memory architectures; context drift; real-world enterprise deployments.', 
+          prompt: 'In the context of developing an MCP-enabled agent for enterprise chatbots using LLMs and RAG, detail hybrid memory architectures for context-aware systems, strategies to mitigate context drift in prolonged interactions, key metrics for assessing memory coherence, and case studies from real-world enterprise deployments.',
+          link: 'https://www.google.com/search?q=Context-Aware+Memory+Systems+LLM' },
+        { id: 'Km', name: 'Kernel Mgmt', cat: 'storage', complexity: 'Expert', area: 'API Control', 
+          desc: 'Using APIs and tools (e.g., memory_replace, memory_append) to modify managed context blocks, often integrated with protocols like MCP for standardized retrieval.',
+          help: 'Standardizes how models modify their own memory state via protocol-based APIs, allowing OS-level control over context.', 
+          topics: 'API design for kernel memory; LangChain integration; performance overhead.', 
+          prompt: 'For building robust agents and MCPs in a RAG-based chatbot, explore kernel context management APIs such as memory_replace and memory_append, their design principles, integration with frameworks like LangChain, potential security risks, and ways to minimize performance overhead in high-volume enterprise scenarios.',
+          link: 'https://www.google.com/search?q=Kernel+Context+Management+LLM' },
+
+        // PILLAR 2: INTEGRATION (High ROI)
+        { id: 'Si', name: 'Selective Inject', cat: 'strategy', complexity: 'Low', area: 'RAG Pipeline Flow', 
+          desc: 'Using RAG to retrieve and inject only the most relevant document chunks at query time, avoiding full context loading.',
+          help: 'Reduces noise and token cost by injecting only precise document "shards" rather than full chapters.', 
+          topics: 'Relevance scoring algorithms; chunking strategies; retriever fine-tuning.', 
+          prompt: 'Building on RAG for agents and MCPs in chatbots, explore selective context injection, including scoring for relevance, vector store chunking, noise mitigation in retrievals, and retriever fine-tuning for specific domains.',
+          link: 'https://www.google.com/search?q=Selective+Context+Injection+RAG' },
+        { id: 'Sp', name: 'Seq Prompting', cat: 'strategy', complexity: 'Med', area: 'Workflow Coherence', 
+          desc: 'Maintaining coherence in narratives or arguments by structuring prompts in sequences that reinforce focus across multiple generations.',
+          help: 'Ensures logical narrative flow by chaining prompts that pass context explicitly between reasoning steps.', 
+          topics: 'Chain-of-Thought for long context; prompt chaining frameworks; state management.', 
+          prompt: 'In the design of coherent chatbots using Agents, MCPs, and RAG with LLMs, investigate sequential prompting techniques, CoT extensions for extended contexts, chaining frameworks, state management in stateless setups, and agentic workflow examples.',
+          link: 'https://www.google.com/search?q=Sequential+Prompting+Strategies' },
+        { id: 'Qa', name: 'Query Aware', cat: 'strategy', complexity: 'High', area: 'Attention Guidance', 
+          desc: 'Placing key query elements before and after context chunks as "bookends" to guide the model\'s attention and improve retrieval accuracy.',
+          help: 'Mitigates "lost-in-the-middle" effects by re-stating core query elements around large context blocks.', 
+          topics: 'Prompt patterns; lost-in-the-middle effects; multimodal adaptations.', 
+          prompt: 'For enhancing retrieval in RAG-based agents and MCPs for chatbots, discuss query-aware contextualization, engineering patterns for bookends, mitigation of lost-in-the-middle issues, A/B testing of formats, and multimodal adaptations.',
+          link: 'https://www.google.com/search?q=Query-Aware+Contextualization' },
+        { id: 'Hs', name: 'Hierarchical', cat: 'strategy', complexity: 'Expert', area: 'Information Retrieval', 
+          desc: 'Step-by-step condensation of retrieved documents in RAG pipelines, combining summaries hierarchically for dense information processing.',
+          help: 'Improves retrieval quality by summarizing complex documentation into layers for faster semantic scanning.', 
+          topics: 'Tree-based hierarchies; error propagation; tools like HyDE.', 
+          prompt: 'For advanced RAG pipelines in LLM agents and MCPs within chatbots, detail hierarchical retrieval and summarization, tree structures, aggregation methods like pooling, managing error propagation, and enhancements via tools like HyDE.',
+          link: 'https://www.google.com/search?q=Hierarchical+Retrieval+Summarization+RAG' },
+
+        // PILLAR 3: OPTIMIZATION
+        { id: 'Rm', name: 'Model Routing', cat: 'opti', complexity: 'Low', area: 'Context Overflow', 
+          desc: 'Intelligently fallback to models with bigger context windows when inputs exceed limits, balancing cost and capability.',
+          help: 'Controls costs by routing simple tasks to small models and long-context tasks to MoE giants.', 
+          topics: 'MoE routing; cost-benefit analysis; hybrid local-cloud routing.', 
+          prompt: 'As an architect for chatbot systems using RAG, LLMs, Agents, and MCPs, investigate routing to larger models for context overflow, including MoE routing, frameworks for cost-benefit analysis, hybrid routing between local and cloud, and techniques to reduce latency.',
+          link: 'https://www.google.com/search?q=Routing+to+Larger+Models+MoE' },
+        { id: 'As', name: 'Adaptive Sz', cat: 'opti', complexity: 'Med', area: 'Dynamic Windows', 
+          desc: 'Adjusting context window size dynamically based on input length or task complexity to optimize compute.',
+          help: 'Saves compute budget by predicting the minimum necessary context window for a given task.', 
+          topics: 'Heuristics for size prediction; tokenizer integration; hallucination rates.', 
+          prompt: 'For developing cost-effective agents and MCPs in RAG-integrated chatbots, cover adaptive context sizing, heuristics for predicting window needs, tokenizer integrations, production A/B testing methodologies, and effects on reducing hallucinations.',
+          link: 'https://www.google.com/search?q=Adaptive+Context+Sizing+LLM' },
+        { id: 'Cc', name: 'Compression', cat: 'opti', complexity: 'High', area: 'Token Redundancy', 
+          desc: 'Token-level removal of redundancy (e.g., pruning) without full summarization, preserving more details.',
+          help: 'Shrinks context windows by up to 80% using semantic compression that preserves critical details.', 
+          topics: 'Gist Tokens; Selective Context; lossy vs. lossless trade-offs.', 
+          prompt: 'In the context of building efficient LLMs, Agents, and MCPs for RAG-based chatbots, discuss context compression techniques such as Gist Tokens and Selective Context, trade-offs between lossy and lossless methods, real-time inference applications, and strategies for recovering details from compressed data.',
+          link: 'https://www.google.com/search?q=LLM+Context+Compression+Gist+Tokens' },
+        { id: 'Ao', name: 'Attention Opt', cat: 'opti', complexity: 'Expert', area: 'Inference Tuning', 
+          desc: 'Manipulating how models attend to context parts to maximize efficiency in production systems.',
+          help: 'Accelerates real-time response times by fusing kernels and prioritizing high-weight attention tokens.', 
+          topics: 'FlashAttention variants; kernel fusion; attention sinking for stability.', 
+          prompt: 'For optimizing context in RAG-enhanced agents and MCPs within enterprise chatbots, explore attention mechanism optimizations like FlashAttention variants, GPU kernel fusion, attention sinking for improved stability, and tools for identifying and resolving attention bottlenecks.',
+          link: 'https://www.google.com/search?q=Attention+Mechanism+Optimization+FlashAttention' },
+
+        // PILLAR 4: EVALUATION
+        { id: 'Cm', name: 'Cost Mgmt', cat: 'eval', complexity: 'Low', area: 'Enterprise Scaling', 
+          desc: 'Strategies like batching inputs, sparse computation, or adaptive sizing to minimize resource use.',
+          help: 'Optimizes "token-per-dollar" efficiency for production-scale, high-concurrency deployments.', 
+          topics: 'Token-per-dollar optimization; serverless scaling; carbon footprint.', 
+          prompt: 'In enterprise chatbot development with LLMs, Agents, MCPs, and RAG, cover cost management for large contexts, token efficiency optimizations, serverless scaling, environmental impacts, and simulation tools for LLM operations.',
+          link: 'https://www.google.com/search?q=Cost+Management+Large+Context+LLM' },
+        { id: 'Mu', name: 'Metrics / Util', cat: 'eval', complexity: 'Med', area: 'Performance Benchmarking', 
+          desc: 'Benchmarks and evaluation methods to measure effective context window performance, such as needle-in-haystack tests.',
+          help: 'Verifies system reliability and data retrieval accuracy using standard tests like Needle-in-a-Haystack.', 
+          topics: 'LongBench; SCROLLS; automated evaluation pipelines.', 
+          prompt: 'For assessing context in RAG agents and MCPs within chatbots, explore utilization metrics, datasets such as LongBench and SCROLLS, automated eval pipelines, HITL validation, and links to practical performance.',
+          link: 'https://www.google.com/search?q=Metrics+for+Context+Utilization+LLM' },
+        { id: 'Kv', name: 'KV Cache', cat: 'eval', complexity: 'High', area: 'Inference Quantization', 
+          desc: 'Optimizing key-value caches during inference to handle large contexts efficiently for memory savings.',
+          help: 'Reduces VRAM usage by quantizing the KV cache, allowing for significantly larger batch sizes.', 
+          topics: 'Quantization; eviction policies (LRU); hardware-specific optimizations.', 
+          prompt: 'Building efficient inference for LLM agents and MCPs in RAG chatbots, delve into KV cache management, quantization for compression, LRU eviction, cluster-based distributed caching, and TPU/GPU optimizations.',
+          link: 'https://www.google.com/search?q=KV+Cache+Management+Inference' },
+        { id: 'Ie', name: 'Inference Eff', cat: 'eval', complexity: 'Expert', area: 'System Latency', 
+          desc: 'Techniques to scale compute, such as parallel processing or optimized hardware configurations.',
+          help: 'Scales throughput for long sequences using speculative decoding and hardware acceleration.', 
+          topics: 'Speculative decoding; model parallelism; FPGA/ASIC acceleration.', 
+          prompt: 'In the context of high-performance chatbots with Agents, MCPs, and RAG using LLMs, analyze inference-time efficiencies, speculative decoding for extended sequences, parallelism approaches, hardware accelerations like FPGA/ASIC, and bottleneck profiling.',
+          link: 'https://www.google.com/search?q=Inference+Time+Efficiencies+LLM' },
+
+        // PILLAR 5: FOUNDATIONS (Architecture)
+        { id: 'Ma', name: 'Multi-Agent', cat: 'arch', complexity: 'Med', area: 'Sub-Agent Orchestration', 
+          desc: 'Dividing tasks among specialized sub-agents, each with clean context windows, to handle complex interactions.',
+          help: 'Distributes cognitive load across specialized agents to maintain clean, focused context windows.', 
+          topics: 'Orchestration patterns; load balancing; failure recovery.', 
+          prompt: 'As part of architecting LLMs, Agents, and MCPs for a scalable chatbot, delve into multi-agent architectures, including orchestration for sub-agent interactions, load balancing techniques, failure recovery strategies, and practical case studies in hierarchical RAG pipelines.',
+          link: 'https://www.google.com/search?q=Multi-Agent+Sub-Agent+Architectures' },
+        { id: 'Pe', name: 'Pos Encoding', cat: 'arch', complexity: 'High', area: 'Position Awareness (RoPE)', 
+          desc: 'Methods to improve positional understanding in long contexts, mitigating performance degradation.',
+          help: 'Enables models to understand sequence order across ultra-long context windows.', 
+          topics: 'Absolute vs. relative encoding; extrapolation; synthetic training.', 
+          prompt: 'For enhancing context management in LLM-based agents and MCPs within enterprise chatbots, investigate position encoding extensions including transitions from absolute to relative types, extrapolation for pre-trained models, effects on multilingual support, and approaches to generating synthetic data for training.',
+          link: 'https://www.google.com/search?q=Position+Encoding+Extensions+LLM' },
+        { id: 'Sa', name: 'Sparse Attn', cat: 'arch', complexity: 'Expert', area: 'Efficient Sequence Handling', 
+          desc: 'Optimizing attention to focus only on relevant tokens, enabling handling of much longer sequences.',
+          help: 'Reduces complexity from quadratic to linear, allowing million-token inputs.', 
+          topics: 'Longformer; BigBird; computational complexity reductions.', 
+          prompt: 'In the framework of RAG-integrated agents and MCPs for chatbots, analyze sparse attention mechanisms like Longformer and Reformer, their variants (e.g., BigBird, Performer), methods to reduce computational complexity, fine-tuning for specific domains, and challenges in applying them to dense reasoning within agent workflows.',
+          link: 'https://www.google.com/search?q=Sparse+Attention+Mechanisms+LLM' },
+        { id: 'Lr', name: 'LongRoPE', cat: 'arch', complexity: 'Expert+', area: 'Window Extrapolation', 
+          desc: 'Extension of RoPE allowing context extrapolation beyond training limits without retraining.',
+          help: 'State-of-the-art architecture for massive context expansion beyond training limits.', 
+          topics: 'Mathematical basis; Hugging Face implementation; ALiBi vs. NTK.', 
+          prompt: 'In building RAG systems with LLMs, Agents, and MCPs for advanced chatbots, provide an in-depth explanation of LongRoPE position encodings, covering its mathematical basis for extrapolation, Hugging Face Transformers integration, performance benchmarks on long-context tasks, and comparative analysis against ALiBi and NTK-aware methods.',
+          link: 'https://www.google.com/search?q=LongRoPE+Position+Encodings+Extrapolation' }
+    ];
+
+    const CAT_THEMES = {
+        storage: { color: '#0f62fe', label: 'High-ROI Memory' },
+        strategy: { color: '#8a3800', label: 'Integration' },
+        opti: { color: '#6929c4', label: 'Optimization' },
+        eval: { color: '#525252', label: 'Evaluation' },
+        arch: { color: '#005d5d', label: 'Foundations' }
+    };
+
+    const grid = document.getElementById('grid');
+    const inspector = document.getElementById('inspector');
+
+    function renderInspector(item) {
+        inspector.innerHTML = `
+            <div class="inspector-header">
+                <span class="tag" style="background:${CAT_THEMES[item.cat].color}">${CAT_THEMES[item.cat].label}</span>
+                <span class="complexity-tag">Complexity: ${item.complexity}</span>
+            </div>
+            
+            <h2>${item.id} // ${item.name}</h2>
+            <div class="area-subtitle">${item.area}</div>
+            
+            <div class="section">
+                <div class="section-label">Technical Description</div>
+                <p class="section-content">${item.desc}</p>
+            </div>
+
+            <div class="impact-box">
+                <div class="section-label" style="color:rgba(255,255,255,0.7); margin-top:0">Architectural Impact</div>
+                <p class="section-content">${item.help}</p>
+            </div>
+
+            <div class="section">
+                <div class="section-label">Deep Dive Focus</div>
+                <p class="section-content" style="color:var(--neon-blue); font-style:italic">${item.topics}</p>
+            </div>
+
+            <div class="section" style="flex-grow:1; display:flex; flex-direction:column;">
+                <div class="section-label">Deep Research Prompt</div>
+                <div class="prompt-window" id="promptText">${item.prompt}</div>
+                <button class="secondary-btn" style="margin-top:10px" onclick="copyPrompt()">COPY PROMPT TO CLIPBOARD</button>
+            </div>
+            
+            <div class="btn-group">
+                <a class="primary-btn" href="${item.link}" target="_blank">
+                    LAUNCH DEEP RESEARCH <span>&rarr;</span>
+                </a>
+            </div>
+        `;
+    }
+
+    // Pillar Labels
+    ['storage', 'strategy', 'opti', 'eval', 'arch'].forEach(cat => {
+        const label = document.createElement('div');
+        label.className = 'col-label';
+        label.style.color = CAT_THEMES[cat].color;
+        label.innerText = CAT_THEMES[cat].label;
+        grid.appendChild(label);
+    });
+
+    // Grid Elements
+    [0, 1, 2, 3].forEach(row => {
+        ['storage', 'strategy', 'opti', 'eval', 'arch'].forEach(cat => {
+            const item = DATA.filter(d => d.cat === cat)[row];
+            if (!item) return;
+            const div = document.createElement('div');
+            div.className = 'block';
+            div.style.background = CAT_THEMES[cat].color;
+            div.style.opacity = '0.8';
+            div.innerHTML = `
+                <div class="block-id">${item.id}</div>
+                <div class="block-name">${item.name}</div>
+            `;
+            div.onclick = () => {
+                document.querySelectorAll('.block').forEach(b => b.classList.remove('active'));
+                div.classList.add('active');
+                renderInspector(item);
+            };
+            grid.appendChild(div);
+            // Default selection
+            if(row === 1 && cat === 'eval' && item.id === 'Mu') { 
+                div.classList.add('active'); 
+                renderInspector(item); 
+            }
+        });
+    });
+
+    window.copyPrompt = () => {
+        const text = document.getElementById('promptText').innerText;
+        navigator.clipboard.writeText(text);
+        const toast = document.getElementById('toast');
+        toast.style.display = 'block';
+        setTimeout(() => toast.style.display = 'none', 2000);
+    };
+</script>
+
+</body>
+</html>

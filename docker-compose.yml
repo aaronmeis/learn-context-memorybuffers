@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8501:8501"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - LLM_MODEL=tinyllama
+      - LLM_PROVIDER=ollama
+      - EMBEDDING_MODEL=all-MiniLM-L6-v2
+      - CHROMA_PERSIST_DIR=/app/chroma_data
+      - FIFO_WINDOW_SIZE=5
+      - PRIORITY_TOP_K=5
+      - HYBRID_TOKEN_LIMIT=500
+      - CONTEXT_WINDOW_BUDGET=4000
+    volumes:
+      - ./chroma_data:/app/chroma_data
+      - ./data:/app/data
+    depends_on:
+      ollama:
+        condition: service_started
+    command: >
+      sh -c "
+        python wait_for_ollama.py &&
+        streamlit run web/app.py --server.address 0.0.0.0 --server.port 8501
+      "
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    # Pull the smallest model on startup
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      ollama serve &
+      sleep 10 &&
+      ollama pull tinyllama &&
+      wait
+
+volumes:
+  ollama_data:
