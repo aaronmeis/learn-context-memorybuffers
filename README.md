@@ -7,46 +7,84 @@ A Streamlit application that demonstrates and compares three memory buffering st
 2. **Priority-Based** - Semantic relevance scoring with intelligent retention
 3. **Hybrid** - ConversationSummaryBuffer combining FIFO with LLM-generated summaries
 
+## Prerequisites
+
+- **Python 3.10+** (3.11 or 3.12 recommended)
+- **Ollama** installed and running ([Download](https://ollama.ai))
+- **Docker Desktop** (optional, for Docker setup)
+
 ## Quick Start
 
 ### Using Docker Compose (Recommended)
 
-1. Make sure Docker Desktop is running
-2. Start the application:
+1. **Make sure Docker Desktop is running**
+
+2. **Start the application**:
    ```bash
    docker-compose up
    ```
-3. Open your browser to `http://localhost:8501`
+
+3. **Wait for initial setup** (first time only):
+   - Docker will pull the Ollama image
+   - Ollama will download the `tinyllama` model (~1.1GB)
+   - This may take 5-10 minutes on first run
+
+4. **Open your browser** to `http://localhost:8501`
 
 The Docker setup will automatically:
 - Pull and start Ollama with the `tinyllama` model (smallest model)
 - Start the Streamlit application
 - Set up all required dependencies
+- Wait for Ollama to be ready before starting the app
 
 ### Local Development
 
-1. Install Ollama from https://ollama.ai
-2. Pull the tinyllama model:
+1. **Install Ollama** from https://ollama.ai and ensure it's running:
+   ```bash
+   ollama serve
+   ```
+
+2. **Pull the tinyllama model**:
    ```bash
    ollama pull tinyllama
    ```
-3. Create a virtual environment:
+
+3. **Set up Python environment**:
+   
+   **Option A: Use setup script (recommended)**
    ```bash
+   # Windows
+   setup.bat
+   
+   # Linux/Mac
+   chmod +x setup.sh
+   ./setup.sh
+   ```
+   
+   **Option B: Manual setup**
+   ```bash
+   # Create virtual environment
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-4. Install dependencies:
-   ```bash
+   
+   # Install dependencies
    pip install -r requirements.txt
+   
+   # Copy environment file
+   cp .env.example .env  # On Windows: copy .env.example .env
+   
+   # Create data directories
+   mkdir chroma_data data
    ```
-5. Copy environment file:
-   ```bash
-   cp .env.example .env
-   ```
-6. Run the application:
+
+4. **Run the application**:
    ```bash
    streamlit run web/app.py
    ```
+
+5. **Open your browser** to `http://localhost:8501`
+
+**Important**: Make sure Ollama is running (`ollama serve`) before starting the Streamlit app, otherwise you'll get connection errors.
 
 ## Features
 
@@ -79,5 +117,27 @@ Edit `.env` to customize:
 - **Streamlit**: Web UI framework
 - **Ollama**: Local LLM inference (using tinyllama)
 - **LangChain**: Memory management abstractions
-- **ChromaDB**: Vector store for semantic retrieval
-- **Sentence Transformers**: Local embeddings
+- **ChromaDB**: Vector store for semantic retrieval (optional, falls back to in-memory if unavailable)
+- **Sentence Transformers**: Local embeddings (optional, ChromaDB can use default embeddings)
+
+## Troubleshooting
+
+### Ollama Connection Issues
+- Ensure Ollama is running: `ollama serve`
+- Check if model is available: `ollama list`
+- Verify Ollama is accessible: `curl http://localhost:11434/api/tags` (or visit in browser)
+
+### Docker Issues
+- Ensure Docker Desktop is running
+- Check Docker logs: `docker-compose logs ollama`
+- Try rebuilding: `docker-compose up --build`
+
+### Port Conflicts
+- If port 8501 is in use, change it in `docker-compose.yml` or use: `streamlit run web/app.py --server.port 8502`
+- If port 11434 is in use, Ollama is already running locally
+
+### Memory/Import Errors
+- On Windows ARM64, some dependencies (like sentence-transformers) may not install. The app will fall back to ChromaDB's default embeddings.
+- If ChromaDB fails, Priority memory will use a simplified in-memory approach.
+
+For more detailed troubleshooting, see [QUICKSTART.md](QUICKSTART.md).
